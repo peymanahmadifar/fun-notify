@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+<meta charset="UTF-8">
+<title>اعلان همکاران</title>
+<style>
+  body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; }
+  li { cursor: pointer; padding: 5px; border-bottom: 1px solid #ccc; }
+  li:hover { background: #f0f0f0; }
+</style>
+</head>
+<body>
+<h2>📢 اعلان همکاران</h2>
+<div id="register">
+  <input id="username" placeholder="اسم خودت رو وارد کن">
+  <button onclick="register()">ثبت</button>
+</div>
+<div id="main" style="display:none;">
+  <h3>لیست همکاران</h3>
+  <ul id="users"></ul>
+</div>
+<audio id="pingSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+
+<script>
+let myName = null;
+
+function register() {
+  myName = document.getElementById("username").value.trim();
+  if(!myName) return alert("اسم بده!");
+
+  fetch("/register", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({name: myName})
+  });
+
+  document.getElementById("register").style.display="none";
+  document.getElementById("main").style.display="block";
+
+  setInterval(loadUsers, 2000);
+  setInterval(checkPings, 3000);
+}
+
+function loadUsers() {
+  fetch("/users")
+    .then(r=>r.json())
+    .then(list=>{
+      let ul = document.getElementById("users");
+      ul.innerHTML="";
+      list.forEach(u=>{
+        if(u===myName) return;
+        let li=document.createElement("li");
+        li.textContent=u;
+        li.onclick=()=>sendPing(u);
+        ul.appendChild(li);
+      });
+    });
+}
+
+function sendPing(to) {
+  fetch("/ping", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({sender: myName, receiver: to})
+  });
+}
+
+function checkPings() {
+  fetch("/check/"+myName)
+    .then(r=>r.json())
+    .then(list=>{
+      if(list.length>0){
+        document.getElementById("pingSound").play();
+        alert("📢 "+list.join(", ")+" باهات کار دارن!");
+      }
+    });
+}
+</script>
+</body>
+</html>
