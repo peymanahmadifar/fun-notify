@@ -82,7 +82,8 @@
   </div>
 </div>
 
-<audio id="pingSound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"></audio>
+<!-- صدای زنگ بلندتر -->
+<audio id="pingSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
 <div id="toast" class="toast"></div>
 
 <script>
@@ -92,7 +93,7 @@ function showToast(message) {
   const toast = document.getElementById("toast");
   toast.textContent = message;
   toast.classList.add("show");
-  setTimeout(() => toast.classList.remove("show"), 4000);
+  setTimeout(() => toast.classList.remove("show"), 5000);
 }
 
 function notifyBrowser(title, message) {
@@ -107,6 +108,8 @@ function register() {
   }
   myName = document.getElementById("username").value.trim();
   if(!myName) return alert("لطفاً اسم خودت رو وارد کن!");
+
+  localStorage.setItem("coworkerName", myName); // ذخیره در مرورگر
 
   fetch("/register", {
     method:"POST",
@@ -150,14 +153,25 @@ function checkPings() {
     .then(r=>r.json())
     .then(list=>{
       list.forEach(sender => {
-        document.getElementById("pingSound").play();
+        const sound = document.getElementById("pingSound");
+        sound.currentTime = 0; // دوباره از اول
+        sound.play();
         const message = sender + " باهات کار داره!";
-        showToast("📢 اعلان همکار", message);
-        notifyBrowser("📢 اعلان همکار", message);
+        showToast(message);
+        notifyBrowser("📢 اعلان جدید", message);
       });
     });
 }
 
+// وقتی صفحه باز میشه اگه اسم قبلا ثبت شده باشه:
+window.onload = () => {
+  const savedName = localStorage.getItem("coworkerName");
+  if(savedName) {
+    document.getElementById("username").value = savedName;
+    register();
+  }
+}
 </script>
 </body>
 </html>
+
