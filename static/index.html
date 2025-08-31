@@ -96,19 +96,15 @@ function showToast(message) {
 }
 
 function notifyBrowser(title, message) {
-  if (!("Notification" in window)) return;
-  if (Notification.permission === "granted") {
-    new Notification(title, {body: message});
-  } else if (Notification.permission !== "denied") {
-    Notification.requestPermission().then(permission => {
-      if(permission === "granted") {
-        new Notification(title, {body: message});
-      }
-    });
+  if ("Notification" in window && Notification.permission === "granted") {
+    new Notification(title, { body: message });
   }
 }
 
 function register() {
+  if ("Notification" in window && Notification.permission !== "granted") {
+    Notification.requestPermission();
+  }
   myName = document.getElementById("username").value.trim();
   if(!myName) return alert("لطفاً اسم خودت رو وارد کن!");
 
@@ -153,14 +149,15 @@ function checkPings() {
   fetch("/check/"+myName)
     .then(r=>r.json())
     .then(list=>{
-      if(list.length>0){
+      list.forEach(sender => {
         document.getElementById("pingSound").play();
-        const message = list.join(", ") + " باهات کار دارن!";
+        const message = sender + " باهات کار داره!";
         showToast("📢 اعلان همکار", message);
         notifyBrowser("📢 اعلان همکار", message);
-      }
+      });
     });
 }
+
 </script>
 </body>
 </html>
