@@ -2,34 +2,119 @@
 <html lang="fa">
 <head>
 <meta charset="UTF-8">
-<title>اعلان همکاران</title>
+<title>📢 اعلان همکاران</title>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  body { font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; }
-  li { cursor: pointer; padding: 5px; border-bottom: 1px solid #ccc; }
-  li:hover { background: #f0f0f0; }
+  body {
+    font-family: 'Vazirmatn', sans-serif;
+    background: #f5f7fa;
+    margin: 0;
+    padding: 0;
+  }
+  .container {
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  h2 { text-align: center; margin-bottom: 20px; }
+  input, button {
+    padding: 10px;
+    margin: 5px 0;
+    font-size: 16px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+  }
+  button {
+    background: #4f46e5;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  button:hover { background: #4338ca; }
+  ul { list-style: none; padding: 0; margin: 0; }
+  li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    margin-bottom: 8px;
+    background: #eef0ff;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  li:hover { background: #dbe0ff; }
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #4f46e5;
+    color: #fff;
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    font-weight: bold;
+    z-index: 9999;
+  }
+  .toast.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
 </style>
 </head>
 <body>
-<h2>📢 اعلان همکاران</h2>
-<div id="register">
-  <input id="username" placeholder="اسم خودت رو وارد کن">
-  <button onclick="register()">ثبت</button>
+<div class="container">
+  <h2>📢 اعلان همکاران</h2>
+  <div id="register">
+    <input id="username" placeholder="اسم خودت رو وارد کن">
+    <button onclick="register()">ثبت</button>
+  </div>
+  <div id="main" style="display:none;">
+    <h3>لیست همکاران</h3>
+    <ul id="users"></ul>
+  </div>
 </div>
-<div id="main" style="display:none;">
-  <h3>لیست همکاران</h3>
-  <ul id="users"></ul>
-</div>
-<audio id="pingSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+
+<audio id="pingSound" src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg"></audio>
+<div id="toast" class="toast"></div>
 
 <script>
 let myName = null;
 
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.classList.add("show");
+  setTimeout(() => toast.classList.remove("show"), 4000);
+}
+
+function notifyBrowser(title, message) {
+  if (!("Notification" in window)) return;
+  if (Notification.permission === "granted") {
+    new Notification(title, {body: message});
+  } else if (Notification.permission !== "denied") {
+    Notification.requestPermission().then(permission => {
+      if(permission === "granted") {
+        new Notification(title, {body: message});
+      }
+    });
+  }
+}
+
 function register() {
   myName = document.getElementById("username").value.trim();
-  if(!myName) return alert("اسم بده!");
+  if(!myName) return alert("لطفاً اسم خودت رو وارد کن!");
 
   fetch("/register", {
-    method:"POST", headers:{"Content-Type":"application/json"},
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
     body: JSON.stringify({name: myName})
   });
 
@@ -58,7 +143,8 @@ function loadUsers() {
 
 function sendPing(to) {
   fetch("/ping", {
-    method:"POST", headers:{"Content-Type":"application/json"},
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
     body: JSON.stringify({sender: myName, receiver: to})
   });
 }
@@ -69,7 +155,9 @@ function checkPings() {
     .then(list=>{
       if(list.length>0){
         document.getElementById("pingSound").play();
-        alert("📢 "+list.join(", ")+" باهات کار دارن!");
+        const message = list.join(", ") + " باهات کار دارن!";
+        showToast("📢 اعلان همکار", message);
+        notifyBrowser("📢 اعلان همکار", message);
       }
     });
 }
